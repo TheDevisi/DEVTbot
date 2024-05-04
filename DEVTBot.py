@@ -1,3 +1,5 @@
+#Welcome to shitty code!
+
 import os
 import discord
 from discord.ext import commands
