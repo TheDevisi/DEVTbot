@@ -1,3 +1,4 @@
+#Welcome to shitty code!
 import os
 import discord
 from discord.ext import commands
@@ -44,4 +45,4 @@ async def get_avatar(ctx, member: discord.Member = None):
     await ctx.send(f"{userAvatar}\n Вот твоя аватарка!")
 
 
-botпл.run(TOKEN)
+bot.run(TOKEN)
