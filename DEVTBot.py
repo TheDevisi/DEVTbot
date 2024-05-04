@@ -1,4 +1,5 @@
-#Welcome to shitty code!
+#Welcome to shitty code! (просмотрено дисканским)
+#рекация: это точно, код действтьельно shitty... а бот темболее!
 
 import os
 import discord
