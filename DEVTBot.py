@@ -1,5 +1,3 @@
-#Welcome to shitty code!
-
 import os
 import discord
 from discord.ext import commands
@@ -39,15 +37,11 @@ async def on_message(message):
 
 #Команда 1
 @bot.command()
-async def test(context):
-    await context.send('Я дурак!')
-
-#Команда 2
-@bot.command()
-async def test2(context):
-    await context.send('зачем тебе второй тест, если в первый раз все было прекрасно?')
+async def get_avatar(ctx, member: discord.Member = None):
+    if not member:
+        member = ctx.message.author
+    userAvatar = member.avatar.url
+    await ctx.send(f"{userAvatar}\n Вот твоя аватарка!")
 
 
-
-
-bot.run(TOKEN)
+botпл.run(TOKEN)
