@@ -3,12 +3,11 @@ import aiohttp
 import discord
 from discord.ext import commands
 import json
-import pycord
 import random
 import asyncio
-
-
-#TODO Asyncio doesen't using, i'll rewrite code with it in the future to make it more safe
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
 
 #Token's path and. If you downloaded this (why???) you should create bot.token.json in folder with this script. Or change path to bot token.
 token_file_path = 'bot_token.json'
@@ -111,6 +110,141 @@ async def roll(ctx):
     bot_choice = random.choice(choices)
     await ctx.send(f"The bot chose {bot_choice}!")
 
+#/////////////////////////////////////////////////////////////////////////
 
-# ONE MORE COMMIT T_T 
+#MODERATION COMMANDS (BAN, KICK, UNBAN, MUTE, UNMUTE)
+
+#BAN a user
+@bot.slash_command(name='ban', description='Bans a user.')
+async def ban(ctx, *, member):
+    banned_users = await ctx.guild.bans()
+    member_name, member_discriminator = member.split('#')
+
+    for ban_entry in banned_users:
+        user = ban_entry.user
+
+        if (user.name, user.discriminator) == (member_name, member_discriminator):
+            await ctx.guild.unban(user)
+            await ctx.send(f"{user.mention} has been unbanned.")
+            return
+
+    await ctx.guild.ban(member)
+    await ctx.send(f"{member.mention} has been banned.")
+
+#UNBAN a user
+@bot.slash_command(name='unban', description='Unbans a user.')
+async def unban(ctx, *, member):
+    banned_users = await ctx.guild.bans()
+    member_name, member_discriminator = member.split('#')
+
+    for ban_entry in banned_users:
+        user = ban_entry.user
+
+        if (user.name, user.discriminator) == (member_name, member_discriminator):
+            await ctx.guild.unban(user)
+            await ctx.send(f"{user.mention} has been unbanned.")
+            return
+
+#Kick a user
+@bot.slash_command(name='kick', description='Kicks a user.')
+async def kick(ctx, *, member):
+    await ctx.guild.kick(member)
+    await ctx.send(f"{member.mention} has been kicked.")
+    return
+
+#Mute a user
+@bot.slash_command(name='mute', description='Mutes a user.')
+async def mute(ctx, *, member):
+    role = discord.utils.get(ctx.guild.roles, name="Muted")
+    await member.add_roles(role)
+    await ctx.send(f"{member.mention} has been muted.")
+    return
+
+#Unmute a user
+@bot.slash_command(name='unmute', description='Unmutes a user.')
+async def unmute(ctx, *, member):
+    role = discord.utils.get(ctx.guild.roles, name="Muted")
+    await member.remove_roles(role)
+    await ctx.send(f"{member.mention} has been unmuted.")
+    return
+
+#Just clear chat
+@bot.slash_command(name='clear', description='Clears the chat.')
+async def clear(ctx, amount=5):
+    await ctx.channel.purge(limit= int(amount))
+    await ctx.send(f"{amount} messages have been cleared.")
+    return
+
+#Create a new role
+@bot.slash_command(name='create_role', description='Creates a role.')
+async def create_role(ctx, *, name):
+    await ctx.guild.create_role(name=name)
+    await ctx.send(f"Role {name} has been created.")
+    return
+
+
+#Deleting role
+@bot.slash_command(name='delete_role', description='Deletes a role.')
+async def delete_role(ctx, *, name):
+    role = discord.utils.get(ctx.guild.roles, name=name)
+    await role.delete()
+    await ctx.send(f"Role {name} has been deleted.")
+    return
+
+#Random motivation quotes from file. Now doesent using, because I don't have motivation quotes for now
+#TODO find motivation quotes and copy them to file 
+#@bot.command(name='random_motivation', description='Generates random motivation')
+#async def random_motivation(ctx):
+    #with open('motivations.txt', 'r') as f:
+        #motivations = f.read().splitlines()
+        #random_motivation = random.choice(motivations)
+        #await ctx.send(random_motivation)
+        #return
+    
+
+@bot.slash_command(name='help', description='Shows all commands')
+async def help(ctx):
+    await ctx.send(f"Here is a list of all commands: \n!get_profile_picture \n!about \n!roll \n!weather \n!coin \n!ban \n!unban \n!kick \n!mute \n!unmute \n!clear \n!create_role \n!delete_role \n!help")
+    return
+@bot.slash_command(name='send_dm', description='Sends a message to a user')
+async def send_dm(ctx, member: discord.Member, *, message):
+    await member.send(message)
+    await ctx.send(f"Message has been sent to {member.mention}.")
+    return
+
+#Detecting swearing from all users messagges removing them and warning a user
+#Doesent work properly
+
+@bot.event
+async def on_message(message):
+    if message.author == bot.user:
+        return
+    if message.author.bot:
+        return
+    if message.content.lower() == "fuck":
+        await message.delete()
+        await message.channel.send(f"{message.author.mention} You are not allowed to say that!")
+        return
+    if message.content.lower() == "shit":
+        await message.delete()
+        await message.channel.send(f"{message.author.mention} You are not allowed to say that!")
+        return
+    if message.content.lower() == "bitch":
+        await message.delete()
+        await message.channel.send(f"{message.author.mention} You are not allowed to say that!")
+        return
+    if message.content.lower() == "asshole":
+        await message.delete()
+        await message.channel.send(f"{message.author.mention} You are not allowed to say that!")
+        return
+    if message.content.lower() == "fucking":
+        await message.delete()
+        await message.channel.send(f"{message.author.mention} You are not allowed to say that!")
+        return
+    if message.content.lower() == "fucked":
+        await message.delete()
+        await message.channel.send(f"{message.author.mention} You are not allowed to say that!")
+        return
+
+    
 bot.run(TOKEN)
