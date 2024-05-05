@@ -1,3 +1,4 @@
+# // Welcome to shitty code! \\
 import aiohttp
 import discord
 from discord.ext import commands
@@ -9,40 +10,37 @@ import asyncio
 
 #TODO Asyncio doesen't using, i'll rewrite code with it in the future to make it more safe
 
-#Token's path. If you downloaded this (why???) you should create bot.token.json in folder with this script. Or change path to bot token.
+#Token's path and. If you downloaded this (why???) you should create bot.token.json in folder with this script. Or change path to bot token.
 token_file_path = 'bot_token.json'
 weather_api_path = 'weather_api.json'
 # Downloading token from file
 with open(token_file_path, 'r') as f:
     token_data = json.load(f)
     TOKEN = token_data['token']
-
+# Same as token, but for weather api. If you want to use your own weather api, you should create weather_api.json in folder with this script. Or change path to weather api key.
 with open(weather_api_path, 'r') as f:
     weather_data = json.load(f)
     weather_API_key = weather_data['api']
 
 
-#Bot init
+#Bot initialization
 bot = commands.Bot(command_prefix='!', intents=discord.Intents.all())
 
 
-#Main init
+#Main bot initialization. Starting bot
 @bot.event
 async def on_ready():
     print(f"{bot.user.name} is now active!")
 
 
-#Checks if message author is not a bot
+#Is message author a bot?
 async def on_message(message):
     if message.author.bot:
         return
     await bot.process_commands(message)
 
 
-
-
-
-#Get user's PFP
+#Getting user's profile picture
 @bot.slash_command(name='get_profile_picture', description='You will get your profile picture')
 async def get_avatar(ctx, member: discord.Member = None):
     if not member:
@@ -52,7 +50,8 @@ async def get_avatar(ctx, member: discord.Member = None):
 
 #TODO Fix a "Activity not found. Start a new one?", remove link to pfp in message (for ex: https://cdn.discordapp.com/avatars/..)
 
-#Just sends some information about this bot
+
+#Just some info about bot. Nothing interesting here. I should add here someting later.
 @bot.slash_command(name='about', description='I will send you some info about me')
 async def about(ctx):
 
@@ -77,7 +76,7 @@ async def roll(ctx, min_num: int, max_num: int):
 
 
 
-#Show's weather for user (yeah, i know, discord users doesen't know what is grass)
+#Swowing weather for a specified location (from user input. e.g Moscow) 
 @bot.slash_command(name='weather', description='Shows the weather for a specified location.')
 async def weather(ctx, location: str):
     api_key = weather_API_key
@@ -104,5 +103,14 @@ async def weather(ctx, location: str):
 
             await ctx.send(f"Weather in {city}: {weather_description}, Temperature: {temperature}°C, Humidity: {humidity}%")
 
-#Thats all for this day. I tired.
+
+#Just a simple coin flip game
+@bot.slash_command(name='coin', description='Heads or Tails?')
+async def roll(ctx):
+    choices = ["Heads", "Tails"]
+    bot_choice = random.choice(choices)
+    await ctx.send(f"The bot chose {bot_choice}!")
+
+
+# ONE MORE COMMIT T_T 
 bot.run(TOKEN)
