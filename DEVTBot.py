@@ -1,4 +1,3 @@
-#Welcome to shitty code!
 import os
 import discord
 from discord.ext import commands
@@ -6,43 +5,44 @@ import json
 import sys
 
 #import asyncio
-#TODO Asyncio пока не используется, в будующем он будет хранить токен.
+#TODO Asyncio doesen't using, i'll rewrite code with it in the future to make it more safe
 
-#Путь к токену бота.
+#Token's path. If you downloaded this (why???) you should create bot.token.json in folder with this script. Or change path to bot token.
 token_file_path = 'bot_token.json'
 
-# Загрузка токена из JSON файла
+# Downloading token from file
 with open(token_file_path, 'r') as f:
     token_data = json.load(f)
     TOKEN = token_data['token']
 
-#Создание перем. с ботом.
+#Bot init
 bot = commands.Bot(command_prefix='!', intents=discord.Intents.all())
 
 
-#Основная инициализация бота
+#Main init
 @bot.event
 async def on_ready():
-    print(f"{bot.user.name} теперь работает!")
+    print(f"{bot.user.name} is now active!")
 
 
-#Проверяет, является ли автором сообщения бот
+#Checks if message author is not a bot
 async def on_message(message):
     if message.author.bot:
         return
     await bot.process_commands(message)
 
-    print(f"{bot.user.name} получил сообщение : {message.content}, на сервере {message.guild}")
-    # TODO должно писать инфу, но оно не пишет. Я не знаю почему.
+    print(f"{bot.user.name} got message : {message.content}, on server {message.guild}")
+    # TODO should return some info, but it doesent. i dont know why.
 
 
-#Команда 1
+
+#Get user's PFP
 @bot.command()
 async def get_avatar(ctx, member: discord.Member = None):
     if not member:
         member = ctx.message.author
     userAvatar = member.avatar.url
-    await ctx.send(f"{userAvatar}\n Вот твоя аватарка!")
+    await ctx.send(f"{userAvatar}\n Here is you profile picture!")
 
 
 bot.run(TOKEN)
