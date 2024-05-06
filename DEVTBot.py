@@ -8,6 +8,10 @@ import asyncio
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
+from PIL import Image
+import io 
+import math
+import datetime
 
 #Token's path and. If you downloaded this (why???) you should create bot.token.json in folder with this script. Or change path to bot token.
 token_file_path = 'bot_token.json'
@@ -247,4 +251,86 @@ async def on_message(message):
         return
 
     
+@bot.slash_command(name='get_cat', description='Shows a random cat picture.')
+async def  random_cat_from_google(ctx):
+    async with aiohttp.ClientSession() as session:
+        async with session.get('https://api.thecatapi.com/v1/images/search') as resp:
+            if resp.status!= 200:
+                await ctx.send(f"Failed to fetch cat picture.")
+                return
+
+            data = await resp.json()
+
+            cat_url = data[0]['url']
+
+            await ctx.send(cat_url)
+
+@bot.slash_command(name='get_dog', description='Shows a random dog picture.')
+async def random_dog_from_google(ctx):
+    async with aiohttp.ClientSession() as session:
+        async with session.get('https://dog.ceo/api/breeds/image/random') as resp:
+            if resp.status!= 200:
+                await ctx.send(f"Failed to fetch dog picture.")
+                return
+
+            data = await resp.json()
+
+            dog_url = data['message']
+
+            await ctx.send(dog_url)
+
+@bot.slash_command(name='get_fox', description='Shows a random fox picture.')
+async def random_fox_from_google(ctx):
+    async with aiohttp.ClientSession() as session:
+        async with session.get('https://randomfox.ca/floof/') as resp:
+            if resp.status!= 200:
+                await ctx.send(f"Failed to fetch fox picture.")
+                return
+
+            data = await resp.json()
+
+            fox_url = data['image']
+
+            await ctx.send(fox_url)
+
+
+@bot.slash_command(name='random_fact', description='Shows a random fact.')
+async def get_random_fact(ctx):
+    async with aiohttp.ClientSession() as session:
+        async with session.get('https://uselessfacts.jsph.pl/random.json?language=en') as resp:
+            if resp.status!= 200:
+                await ctx.send(f"Failed to fetch fact.")
+                return
+
+            data = await resp.json()
+
+            fact = data['text']
+
+            await ctx.send(fact)
+
+
+
+@bot.slash_command(name='get_joke', description='Shows a random joke.')
+async def get_random_joke(ctx):
+    async with aiohttp.ClientSession() as session:
+        async with session.get('https://official-joke-api.appspot.com/random_joke') as resp:
+            if resp.status!= 200:
+                await ctx.send(f"Failed to fetch joke.")
+                return
+
+            data = await resp.json()
+
+            joke = data['setup'] + "\n" + data['punchline']
+
+            await ctx.send(joke)
+
+@bot.slash_command(name='actualtime', description='Shows the actual time in your timezone.')
+async def get_actual_time(ctx):
+    await ctx.send(datetime.datetime.now(datetime.timezone.utc).astimezone())
+    return datetime.dat
+
+
+
+        
+                               
 bot.run(TOKEN)
