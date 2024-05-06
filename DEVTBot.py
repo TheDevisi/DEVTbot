@@ -331,6 +331,39 @@ async def get_actual_time(ctx):
 
 
 
-        
+# Dictionary to hold guild-specific settings
+guild_settings = {}
+
+@bot.slash_command(name='configure_greeting', description='Configures the greeting message and channel.')
+@commands.has_permissions(administrator=True)
+async def configure_greeting(ctx, channel: discord.TextChannel, *, message: str):
+    # Store the configuration in the guild_settings dictionary
+    guild_id = ctx.guild.id
+    if guild_id not in guild_settings:
+        guild_settings[guild_id] = {}
+    guild_settings[guild_id]['greeting_channel'] = channel.id
+    guild_settings[guild_id]['greeting_message'] = message
+    await ctx.send(f"Greeting message and channel configured! Message: \"{message}\" will be sent in {channel.mention}")
+
+#TODO Make this shit pinging user even with custom welcome message 
+@bot.event
+async def on_member_join(member):
+    guild_id = member.guild.id
+    if guild_id in guild_settings:
+        settings = guild_settings[guild_id]
+        if 'greeting_channel' in settings and 'greeting_message' in settings:
+            channel = bot.get_channel(settings['greeting_channel'])
+            if channel:
+                # Send the greeting message in the specified channel
+                greeting_message = settings['greeting_message'].replace("{user}", member.mention)  # Пинг пользователя
+                await channel.send(greeting_message)
+                # Send a DM to the new member
+                try:
+                    dm_message = settings['greeting_message'].replace("{user}", f"@{member.name}")  # Пинг пользователя в DM
+                    await member.send(dm_message)
+                except discord.Forbidden:
+                    print(f"Couldn't send DM to {member.name}")
+
+
                                
 bot.run(TOKEN)
