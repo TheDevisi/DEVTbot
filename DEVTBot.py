@@ -13,6 +13,7 @@ import io
 import math
 import datetime
 
+
 #Token's path and. If you downloaded this (why???) you should create bot.token.json in folder with this script. Or change path to bot token.
 token_file_path = 'bot_token.json'
 weather_api_path = 'weather_api.json'
@@ -25,10 +26,18 @@ with open(weather_api_path, 'r') as f:
     weather_data = json.load(f)
     weather_API_key = weather_data['api']
 
+# Load the stop words from the NLTK corpus
+#nltk.download('stopwords')
+#stop_words = set(nltk.corpus.stopwords.words('english', 'russian'))
+#TODO Make this used in future
+
+
+
 
 #Bot initialization
 bot = commands.Bot(command_prefix='!', intents=discord.Intents.all())
-
+intents = discord.Intents.default()
+intents.members = True
 
 #Main bot initialization. Starting bot
 @bot.event
@@ -52,7 +61,7 @@ async def get_avatar(ctx, member: discord.Member = None):
     await ctx.send(f"{userAvatar}\n Here is profile picture!")
 
 #TODO Fix a "Activity not found. Start a new one?", remove link to pfp in message (for ex: https://cdn.discordapp.com/avatars/..)
-
+#FIXME: I don't know how to fix it. Kill me
 
 #Just some info about bot. Nothing interesting here. I should add here someting later.
 @bot.slash_command(name='about', description='I will send you some info about me')
@@ -119,35 +128,27 @@ async def roll(ctx):
 #MODERATION COMMANDS (BAN, KICK, UNBAN, MUTE, UNMUTE)
 
 #BAN a user
-@bot.slash_command(name='ban', description='Bans a user.')
-async def ban(ctx, *, member):
-    banned_users = await ctx.guild.bans()
-    member_name, member_discriminator = member.split('#')
 
-    for ban_entry in banned_users:
-        user = ban_entry.user
+@bot.slash_command(
+    name='ban',
+    description='Bans a user.'
+)
+@commands.has_permissions(ban_members=True, administrator=True)
+async def ban(ctx, member: discord.Member, reason: str = None):
+    if member.id == ctx.author.id:
+        await ctx.respond("DUDE! YOU CAN'T BAN YOURSELF! :skull:")
+        return
 
-        if (user.name, user.discriminator) == (member_name, member_discriminator):
-            await ctx.guild.unban(user)
-            await ctx.send(f"{user.mention} has been unbanned.")
-            return
+    elif member.guild_permissions.administrator:
+        await ctx.respond("You can't ban an administrator.")
+        return
 
-    await ctx.guild.ban(member)
-    await ctx.send(f"{member.mention} has been banned.")
+    if reason is None:
+        reason = f"Not provided by {ctx.author}"
 
-#UNBAN a user
-@bot.slash_command(name='unban', description='Unbans a user.')
-async def unban(ctx, *, member):
-    banned_users = await ctx.guild.bans()
-    member_name, member_discriminator = member.split('#')
+    await member.ban(reason=reason)
+    await ctx.respond(f"<@{ctx.author.id}> used ban to <@{member.id}> Reason: {reason}")
 
-    for ban_entry in banned_users:
-        user = ban_entry.user
-
-        if (user.name, user.discriminator) == (member_name, member_discriminator):
-            await ctx.guild.unban(user)
-            await ctx.send(f"{user.mention} has been unbanned.")
-            return
 
 #Kick a user
 @bot.slash_command(name='kick', description='Kicks a user.')
@@ -217,7 +218,7 @@ async def send_dm(ctx, member: discord.Member, *, message):
     return
 
 #Detecting swearing from all users messagges removing them and warning a user
-#Doesent work properly
+#FIXME: Doesent work properly
 
 @bot.event
 async def on_message(message):
@@ -365,5 +366,33 @@ async def on_member_join(member):
                     print(f"Couldn't send DM to {member.name}")
 
 
-                               
+@bot.slash_command(name='random_motivation', description='Generates random motivation.')
+async def random_motivation(ctx):
+    async with aiohttp.ClientSession() as session:
+        async with session.get('https://api.motivationalquotes.io/v1/motivation') as resp:
+            if resp.status!= 200:
+                await ctx.send(f"Failed to fetch motivation.")
+                return
+
+            data = await resp.json()
+
+            motivation = data['content']
+
+            await ctx.send(motivation)
+
+        
+
+
+
 bot.run(TOKEN)
+
+
+
+
+
+#Господа, зачем вы это читаете? @TheDevisi (я) урод. Я добавляю функционал в бота, но не фикшу старые баги/недорабки. 
+#Я не знаю, зачем вы это читаете и скачали данный исходный код.
+#Хорошего дня!
+
+#PS
+#ЭТОТ КУСОК ДЕРЬМА НАЗЫВАЕМЫЙ КОДОМ НУЖНО СЖЕЧЬ
