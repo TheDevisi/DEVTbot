@@ -6,55 +6,73 @@ import json
 import random
 import asyncio
 import nltk
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
 from PIL import Image
 import io 
 import math
 import datetime
+import re
+guild_with_disabled_filter = []
 
 
-#Token's path and. If you downloaded this (why???) you should create bot.token.json in folder with this script. Or change path to bot token.
+filter_settings_path = 'filter_settings.json'
 token_file_path = 'bot_token.json'
 weather_api_path = 'weather_api.json'
+bad_words_path = 'bad_words.txt'
+#Token path (for your bot). Put your token in bot_token.json or change path here.
+
 # Downloading token from file
 with open(token_file_path, 'r') as f:
     token_data = json.load(f)
     TOKEN = token_data['token']
-# Same as token, but for weather api. If you want to use your own weather api, you should create weather_api.json in folder with this script. Or change path to weather api key.
+
+#same as bot token, but for weather. put your token (for example OpenWeather) into weather_api.json. Or change path here.
 with open(weather_api_path, 'r') as f:
     weather_data = json.load(f)
     weather_API_key = weather_data['api']
 
-# Load the stop words from the NLTK corpus
-#nltk.download('stopwords')
-#stop_words = set(nltk.corpus.stopwords.words('english', 'russian'))
+#loads swears from txt file
+with open(bad_words_path, 'r') as f:
+    bad_words = f.read().split('\n')
+
+#loading filter settings from json file
+def load_filter_settings():
+    try:
+        with open(filter_settings_path, 'r') as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return "FILE NOT EXIST! PLEASE CREATE filter_settings.json"
+
+
+
+
+
 #TODO Make this used in future
 
+guild_settings = {}
 
 
-
-#Bot initialization
+#Bot init 
 bot = commands.Bot(command_prefix='!', intents=discord.Intents.all())
 intents = discord.Intents.default()
 intents.members = True
 
-#Main bot initialization. Starting bot
+#Starting bot
 @bot.event
 async def on_ready():
     print(f"{bot.user.name} is now active!")
 
 
-#Is message author a bot?
+#Checking if message author a bot or not
 async def on_message(message):
     if message.author.bot:
         return
     await bot.process_commands(message)
 
 
-#Getting user's profile picture
+#Command to get profile picture.
 @bot.slash_command(name='get_profile_picture', description='You will get your profile picture')
 async def get_avatar(ctx, member: discord.Member = None):
+    """Basicaly, just getting user's profile picture link and sends this into chat."""
     if not member:
         member = ctx.message.author
     userAvatar = member.avatar.url
@@ -70,7 +88,7 @@ async def about(ctx):
     info = '''Thanks for interesting!
 The first, then I've seen the light was in: 03.05.2024
 My creator is Devisi
-My first command which was helpful is "!get_avatar" (which you can't find in my source anymore)
+My first command which was helpful is "!get_avatar" (and you can't find in my source anymore)
 I have GitHub repository with my code! https://github.com/TheDevisi/DEVTbot
 And that's all for now!'''
 
@@ -79,6 +97,8 @@ And that's all for now!'''
 #Select number betwen min and max. Roll.
 @bot.slash_command(name='roll', description='Rolls a random number between two given numbers.')
 async def roll(ctx, min_num: int, max_num: int):
+    """We using "random" to get random number in range.
+        I think it understable here, i tryed to write good code ^_^"""
     if min_num >= max_num:
         await ctx.send("Invalid range! The minimum number must be less than the maximum number.")
         return
@@ -91,6 +111,9 @@ async def roll(ctx, min_num: int, max_num: int):
 #Swowing weather for a specified location (from user input. e.g Moscow) 
 @bot.slash_command(name='weather', description='Shows the weather for a specified location.')
 async def weather(ctx, location: str):
+    """Here we using OpenWeather API Key for getting weather.
+        If you want put your API key go to line 25 for instruction.
+        IF YOU DON'T WANT THIS FEATURE (sadly :( ) just remove this function """
     api_key = weather_API_key
     base_url = "http://api.openweathermap.org/data/2.5/weather"
 
@@ -119,6 +142,7 @@ async def weather(ctx, location: str):
 #Just a simple coin flip game
 @bot.slash_command(name='coin', description='Heads or Tails?')
 async def roll(ctx):
+    """The same as the roll, but we don't give choice to user."""
     choices = ["Heads", "Tails"]
     bot_choice = random.choice(choices)
     await ctx.send(f"The bot chose {bot_choice}!")
@@ -128,28 +152,26 @@ async def roll(ctx):
 #MODERATION COMMANDS (BAN, KICK, UNBAN, MUTE, UNMUTE)
 
 #BAN a user
+@bot.slash_command(name='ban',description='Bans a user.')
 
-@bot.slash_command(
-    name='ban',
-    description='Bans a user.'
-)
-@commands.has_permissions(ban_members=True, administrator=True)
+@commands.has_permissions(ban_members=True, administrator=True) #Checking permissions
 async def ban(ctx, member: discord.Member, reason: str = None):
-    if member.id == ctx.author.id:
-        await ctx.respond("DUDE! YOU CAN'T BAN YOURSELF! :skull:")
+    if member.id == ctx.author.id: #If you want to BAN yourself and you want to get fucked  just remove these lines
+        await ctx.respond("DUDE! YOU CAN'T BAN YOURSELF! :skull:") # ":skull" means skull emoji in discord (💀)
         return
 
-    elif member.guild_permissions.administrator:
+    elif member.guild_permissions.administrator: #If user has adminstrator power he can't get banned
         await ctx.respond("You can't ban an administrator.")
         return
 
     if reason is None:
-        reason = f"Not provided by {ctx.author}"
+        reason = f"Not provided by {ctx.author}" #If user not provided reason to ban someone
 
     await member.ban(reason=reason)
-    await ctx.respond(f"<@{ctx.author.id}> used ban to <@{member.id}> Reason: {reason}")
+    await ctx.respond(f"<@{ctx.author.id}> used ban to <@{member.id}> Reason: {reason}") #Output if user banned succesfully
 
 
+#TODO MAKE THIS FUCKING WORK
 #Kick a user
 @bot.slash_command(name='kick', description='Kicks a user.')
 async def kick(ctx, *, member):
@@ -196,16 +218,6 @@ async def delete_role(ctx, *, name):
     await ctx.send(f"Role {name} has been deleted.")
     return
 
-#Random motivation quotes from file. Now doesent using, because I don't have motivation quotes for now
-#TODO find motivation quotes and copy them to file 
-#@bot.command(name='random_motivation', description='Generates random motivation')
-#async def random_motivation(ctx):
-    #with open('motivations.txt', 'r') as f:
-        #motivations = f.read().splitlines()
-        #random_motivation = random.choice(motivations)
-        #await ctx.send(random_motivation)
-        #return
-    
 
 @bot.slash_command(name='help', description='Shows all commands')
 async def help(ctx):
@@ -217,39 +229,6 @@ async def send_dm(ctx, member: discord.Member, *, message):
     await ctx.send(f"Message has been sent to {member.mention}.")
     return
 
-#Detecting swearing from all users messagges removing them and warning a user
-#FIXME: Doesent work properly
-
-@bot.event
-async def on_message(message):
-    if message.author == bot.user:
-        return
-    if message.author.bot:
-        return
-    if message.content.lower() == "fuck":
-        await message.delete()
-        await message.channel.send(f"{message.author.mention} You are not allowed to say that!")
-        return
-    if message.content.lower() == "shit":
-        await message.delete()
-        await message.channel.send(f"{message.author.mention} You are not allowed to say that!")
-        return
-    if message.content.lower() == "bitch":
-        await message.delete()
-        await message.channel.send(f"{message.author.mention} You are not allowed to say that!")
-        return
-    if message.content.lower() == "asshole":
-        await message.delete()
-        await message.channel.send(f"{message.author.mention} You are not allowed to say that!")
-        return
-    if message.content.lower() == "fucking":
-        await message.delete()
-        await message.channel.send(f"{message.author.mention} You are not allowed to say that!")
-        return
-    if message.content.lower() == "fucked":
-        await message.delete()
-        await message.channel.send(f"{message.author.mention} You are not allowed to say that!")
-        return
 
     
 @bot.slash_command(name='get_cat', description='Shows a random cat picture.')
@@ -325,46 +304,6 @@ async def get_random_joke(ctx):
 
             await ctx.send(joke)
 
-@bot.slash_command(name='actualtime', description='Shows the actual time in your timezone.')
-async def get_actual_time(ctx):
-    await ctx.send(datetime.datetime.now(datetime.timezone.utc).astimezone())
-    return datetime.dat
-
-
-
-# Dictionary to hold guild-specific settings
-guild_settings = {}
-
-@bot.slash_command(name='configure_greeting', description='Configures the greeting message and channel.')
-@commands.has_permissions(administrator=True)
-async def configure_greeting(ctx, channel: discord.TextChannel, *, message: str):
-    # Store the configuration in the guild_settings dictionary
-    guild_id = ctx.guild.id
-    if guild_id not in guild_settings:
-        guild_settings[guild_id] = {}
-    guild_settings[guild_id]['greeting_channel'] = channel.id
-    guild_settings[guild_id]['greeting_message'] = message
-    await ctx.send(f"Greeting message and channel configured! Message: \"{message}\" will be sent in {channel.mention}")
-
-#TODO Make this shit pinging user even with custom welcome message 
-@bot.event
-async def on_member_join(member):
-    guild_id = member.guild.id
-    if guild_id in guild_settings:
-        settings = guild_settings[guild_id]
-        if 'greeting_channel' in settings and 'greeting_message' in settings:
-            channel = bot.get_channel(settings['greeting_channel'])
-            if channel:
-                # Send the greeting message in the specified channel
-                greeting_message = settings['greeting_message'].replace("{user}", member.mention)  # Пинг пользователя
-                await channel.send(greeting_message)
-                # Send a DM to the new member
-                try:
-                    dm_message = settings['greeting_message'].replace("{user}", f"@{member.name}")  # Пинг пользователя в DM
-                    await member.send(dm_message)
-                except discord.Forbidden:
-                    print(f"Couldn't send DM to {member.name}")
-
 
 @bot.slash_command(name='random_motivation', description='Generates random motivation.')
 async def random_motivation(ctx):
@@ -381,18 +320,14 @@ async def random_motivation(ctx):
             await ctx.send(motivation)
 
         
+#Detecting swears in user message and remove message. Swears loading from "bad_words" variable. More you can find at the start of the code.
+#Also, make sure you have "bad_words.txt" file in the same directory as the bot. 
+#And here i added command if administrator wants to delete the filter and allow swears again for specefic guild.
+#If user want to enable filter again, he can use!enable_filter command.
+#This shit loading guild id's from filter_settings.json which contains guild id's which have filter disabled. IF FILTER DISABLED, IT DOESENT WORK.  
+#todo make this because now it doesent exist
 
 
 
 bot.run(TOKEN)
 
-
-
-
-
-#Господа, зачем вы это читаете? @TheDevisi (я) урод. Я добавляю функционал в бота, но не фикшу старые баги/недорабки. 
-#Я не знаю, зачем вы это читаете и скачали данный исходный код.
-#Хорошего дня!
-
-#PS
-#ЭТОТ КУСОК ДЕРЬМА НАЗЫВАЕМЫЙ КОДОМ НУЖНО СЖЕЧЬ
